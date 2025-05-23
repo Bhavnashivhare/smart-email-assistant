@@ -18,6 +18,10 @@ def generate_response(confidence, category, text, threshold=0.6):
             "reason": "Low confidence or unknown category",
             "logged_to": "escalation_log.txt"
         }
+    else:
+        escalation_info = {
+            "status": "not_escalated"
+        }
 
     return {
         "status": "success",
@@ -37,5 +41,5 @@ Best regards,
 [Your Position]
 [Your Contact Information]
 """,
-        "escalation": escalation_info or {}
+        "escalation": escalation_info
     }
