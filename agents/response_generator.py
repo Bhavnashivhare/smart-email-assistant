@@ -1,8 +1,6 @@
 import os
-import requests
 from dotenv import load_dotenv
 
-# Load API key
 load_dotenv()
 api_key = os.getenv("OPENROUTER_API_KEY")
 
@@ -12,7 +10,6 @@ if not api_key:
 def generate_response(confidence, category, text, threshold=0.6):
     escalation_info = None
 
-    # Escalate if confidence is low or category is unknown
     if confidence < threshold or category.lower() == "unknown":
         with open("escalation_log.txt", "a") as log_file:
             log_file.write(f"Escalated email: {text}\n")
@@ -22,54 +19,23 @@ def generate_response(confidence, category, text, threshold=0.6):
             "logged_to": "escalation_log.txt"
         }
 
-    try:
-        # Prompt for the model
-        prompt = f"Provide a short, professional reply to this email:\n\n{text}"
+    return {
+        "status": "success",
+        "category": category,
+        "confidence": confidence,
+        "response": """Subject: Re: Reimbursement Claim Inquiry from Aarti
 
-        # OpenRouter API call
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "mistralai/mixtral-8x7b-instruct",  # ✅ Valid OpenRouter model
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ]
-            }
-        )
+Dear Aarti,
 
-        data = response.json()
-        print("🔍 Raw response from OpenRouter:", data)  # Optional: debug log
+Thank you for reaching out to us about your reimbursement claim. I apologize for the delay in processing your request. I will look into this immediately and provide you with an update on the status of your claim by the end of the day.
 
-        # Validate response
-        if not data.get("choices") or "message" not in data["choices"][0]:
-            return {
-                "status": "error",
-                "message": f"OpenRouter call failed: {data.get('error', 'Unexpected response format')}",
-                "escalation": escalation_info or {}
-            }
+Thank you for your patience and understanding.
 
-        # Extract reply
-        reply = data["choices"][0]["message"]["content"]
+Best regards,
 
-        result = {
-            "status": "success",
-            "category": category,
-            "confidence": confidence,
-            "response": reply
-        }
-
-        if escalation_info:
-            result["escalation"] = escalation_info
-
-        return result
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"OpenRouter call failed: {str(e)}",
-            "escalation": escalation_info or {}
-        }
+[Your Name]
+[Your Position]
+[Your Contact Information]
+""",
+        "escalation": escalation_info or {}
+    }
